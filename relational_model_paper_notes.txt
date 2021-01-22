@@ -1,0 +1,92 @@
+A Relational Model of Data for Large Shared Data Banks
+https://www.seas.upenn.edu/~zives/03f/cis550/codd.pdf
+
+Abstract
+Users should be unaware of how data is represented, so they should work well without revealing the structures. Current systems for this are tree structures files or network models; the cons of these will be discussed. A new model for representing data and a language to use it are discusses.
+
+	1. Relational Model and Normal Form
+1.1 Introduction
+The relational model is made to work independent of the application, data types, size of data, and method of data changes. It is proposed to seem natural (not too formatted for machine understanding, but an intuitive format for humans), have a robust language for usage, and not be confusing to use.
+
+1.2 Data Dependencies in Present Systems
+Current systems allow for changing data characteristics in tables, but not without breaking other parts of applications. Also, representations are currently cluttered and the data is not independent. Three things need be removed: ordering dependence, indexing dependence, and acccess path dependence (currently these dependencies are not seperate).
+
+1.2.1 Ordering Dependence
+Current methods have some ordering and if the ordering breaks, the system breaks.
+
+1.2.2 Indexing Dependence
+Indicies help with finding data but as soon as you need to insert and delete data at indicies, systems get complicated. Since indicies are just for performance and not needed for the actual organization of the data, can we just get rid of them?
+
+1.2.3 Access Path Dependence
+Tree file systems of data require knowledge of the tree format, adherence to the file formatting, that every file exists as needed, and the structure of the file system never changes for the lifetime of the application. These are unrealistic assumptions especially since file system architechture can and should be able to change often.
+
+1.3 A Relational View of Data
+A relation is a tuple where each element is a value within each domain, where domains are values of a specific meaning.
+So for some table, the columns are the domains, and a relation is a row. Row order does not matter in this table, each row is distinct, and ordering of each column is important for the strucutre of the relation, and each column has a label to name the domain. It is imperative that each domain have a distinct name. 
+	• Given this, a relationship is a set of unordered domains (so the table)
+	• Components are the sets of domains in a relationship (table)
+
+This is the basis of the relational database: tables of relations.
+	• Relations can be added, removed, and updated
+	• Users can select all relations for a domain and get only that, not the entire table
+
+For a table, there will be a domain that has a unique identifier for each relation, this domain is called the 'primary key'.
+	• Can have multiple domains that fit this, but only one should be the primary key
+	• Multiple domains that fit this are called 'nonredundant primary keys'
+	• If multiple nonredundant primary keys are in a relationship, one is arbitratily selected as the primary key
+
+A domain can be a 'foreign key' if it is not the primary key in one relationship, but is the primary key in another relationship.
+	• So foreign key = column that is common in two tables and is the primary key for one of the tables
+
+1.4 Normal Form
+Standardizing all related tables to have the same primary key in all domains simplifies finding data common between them. If you have some table that does not have the primary key of other tables in its set, it will be difficult to map the tables together to find which records correspond to those in the other tables.
+Normal form is making tables with 'simple domains' where each domain has no tree dependency, and each table has the same primary key.
+
+1.5 Some Linguistic Aspects
+Making tables with the normalized relational table system lends itself to a standard language to be made to deal with all of these tables. Just call the table, domain, and action to do something. This language could be implemented as a tool in other existing languages as well.
+
+1.6 Expressible, Named, and Stored Relations
+A set of data users know by heart is a 'named set', some set the users know and use by name.
+The expressible set is the totality of data that can be input by some data language into the table.
+Named sets can and should be defined in that there should be a defined set of allowed values for the set. 
+Data designers can and should define classes of data to be stored in each domain, such that the named set is easy to deal with.
+	• Make definitions of data allowed in each column, not be able to, for example, put "5" in a set that's supposed to contain colors
+
+	2. Redundancy and Consistency
+
+2.1 Operations on Relations
+2.1.1 Permutation
+	• Permutations are the possibilities of ordering the columns of a table
+	• The order shouldn't matter when using it, it just matters when entering new relations
+	• Ordering can matter in terms of performance with certain operations
+
+2.1.2 Projection
+A projection is a reduced set of some column from a relational table.
+Say I take just 'color' from a table and remove all duplicate values -> the resulting table is called a 'projection'.
+
+2.1.3 Join
+Tables can be joined to one table if they have a common key between them.
+	• Align tables to the shared key, join left to right
+
+2.1.4 Composition
+Composition with functions is using two functions to produce one result.
+Ex: Given f(x) and g(x), h(x) = g(f(x))
+Two relations are composable if and only if they are joinable.
+
+2.1.5 Restriction
+Performing a restriction on a table is reducing it to table R from the main table S, such that R is smaller than S.
+
+2.2 Redundancy
+2.2.1 Strong Redundancy
+A set of relations is strongly redundant if it contains at least one relation that possesses a projection that is derivable from other projections in the set.
+	• This is helpful for user convenience
+		○ Lets older programs continue to work
+
+2.2.2 Weak Redundancy
+A collection of relations is weakly redundant if it contains a relation that hs a projection which is not derivable from itehr members but is at all times a projection of some join of other projectiosn of relations in the collection.
+	• Inherent to the logical needs of users
+
+2.3 Consistency
+A database is consistent if it is only changed in allowed ways, and the data in each domain is specific to the allowed definitions allowable for the data. Having consistent databases makes working with them easier. This does however need to have no user error.
+	• Notifying a user of inconsistency after a check following each addition, update, or deletion is time consuming
+	• It is preferable to let an inconsistency wait, do a check on a timed basis, and notify the database administrator if the inconsistency is not fixed after a specified amount of time
