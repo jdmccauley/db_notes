@@ -72,3 +72,98 @@ Deleting a table is dropping it, just like a db:
 `DROP TABLE name;`
 
 2.4 Populating a Table with Rows
+You use the syntax
+```
+INSERT INTO table_name VALUES (values);
+```
+To enter data into a table. The values are to be separated with a comma, the values must be in column order, and the values that are not numbers must be in quotes.
+You can forgo the requirement for ordering if you also pass an ordering of columns explicitly, and this is actually best practice:
+```
+INSERT INTO table_name (columnName, columnName2, columnName3)
+	VALUES (value, value2, value3);
+```
+
+Similarly, you can copy from a file:
+`COPY table_name FROM 'path/to/file.txt';
+Note this file must be available to the backend, not the necessarily the client.
+
+2.5 Querying a Table
+You use the syntax
+```
+SELECT field(s) FROM table_name;
+```
+You can use '*' to select all fields.
+	• You can use expressions and boolean logic to select operated or conditional data:
+	Expression example: `SELECT (height+width)/2 AS avg FROM my_table;`
+		○ This computes (height+width)/2 and outputs it as column 'avg' but doesn't save into the table, just the output
+	Boolean example: `SELECT height FROM my_table WHERE hight > 5.0;`
+	• You can also order and get unique values:
+	Order: `SELECT * FROM my_table ORDER BY hieght;`
+	Unique: `SELECT DISTINCT names FROM my_table;`
+	
+2.6 Joins Between Tables
+You can query data from multiple tables, and you can use conditionals for the queries; just call column names as you would properties from an object where the object is the table.
+Ex:
+`SELECT my_table.name, your_table.name FROM my_table, your_table
+	WHERE my_table.height = your_table.height;`
+The output is a joined table from the original two tables, processed as per the query.
+If you omit the table.column syntax and just call the column, postgreSQL will do its best to assume which column you mean, but it's good practice to be explicit in which column you want from which table.
+
+The joining behaviour can be specified, such that you can put table name before or after the JOIN operator. The JOIN operator lets you select which table you want a conditional to work on.
+```
+SELECT * FROM my_table INNER JOIN your_table ON (my_table.height = your_table.width);
+```
+This selects all from my_table, and only adds rows from your_table where the condition is true.
+Join types:
+	• LEFT OUTER JOIN = table left of JOIN operator will have all rows and right is conditional
+		○ For columns in the right table that do not have data for the left table columns, the values are empty (null)
+	• RIGHT OUTER JOIN = same as LEFT OUTER JOIN, but flipped
+	• INNER JOIN = columns show up for the joined tables only where values for each table exist, no empty values
+	• FULL OUTER JOIN = tables joined and no values are dropped, and empty values will exist for both tables where that lack data for a column
+
+Note: you can make aliases for tables to shorten them in statements:
+```
+SELECT * FROM my_table m, your_table y WHERE m.height = y.width;
+```
+
+2.7 Aggregate Functions
+You can call 'aggregate functions' which computer a single value from multiple input rows. Most common are:
+	• count
+	• sum
+	• avg
+	• max
+	• min
+These can also be conditional, and grouped. Say you want to compute the max height in a table for each unique name:
+`SELECT name, max(height) FROM my_table GROUP BY name;`
+This can be extended with the HAVING clause for conditionals:
+`SELECT name, max(height) FROM my_table GROUP BY name HAVING max(height) > 5;`
+	• Returns only names and their max heights for unique names where their max height is greater than 5
+Note that WHERE is used before GROUP BY, and HAVING is used after GROUP BY.
+
+2.8 Updates
+Updates can be done to rows, as long as you select the correct rows. Here is the syntax for updating:
+```
+UPDATE table_name
+	SET column = value
+	WHERE condition for column;
+```
+It's important to select the correct rows to update with the WHERE clause. And note that you make the changes with SET, and call the table directly after UPDATE.
+
+2.9 Deletions
+Syntax for deletions:
+```
+DELETE FROM table_name WHERE condition for column;
+```
+You MUST AND I MEAN MUST give a condition to delete rows. If you forget and to this:
+`DELETE FROM table_name;`
+all of the rows are deleted. There is no warning. Don't be that guy.
+
+
+
+
+Summary:
+CRUD changes to tables in postgreSQL, with good practice syntax:
+	• Create = INSERT INTO table_name (list, of, columns) VALUES (values, for, columns);
+	• Read = SELECT column FROM table;
+	• Update = UPDATE table_name WHERE condition for column
+	• Delete = DELETE FROM table_name WHERE condition for column
