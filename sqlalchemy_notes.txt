@@ -1,0 +1,129 @@
+sqlalchemy learning:
+https://docs.sqlalchemy.org/en/13/orm/tutorial.html
+
+Object Relational Tutorial
+	• This package lets you map python objects to rows in tables of databases, such that the state of the row and object is synchronized
+		○ Also include methods to query based on the classes
+	• This ORM is made from the SQLAlchemy Expression Language, which is a python wrapper that interacts with databases with python constructs
+
+	• Starting to use a db include the following steps:
+	1. Create engine for connecting to the db with a url for the db
+		a. This then runs in tbe backend while the ORM does the work
+		```
+		from sqlalchemy import create_engine
+		engine = create_engine('sqlite:///path', echo=True)
+		```
+	2. Use a Declarative to create classes to map to the db
+		a. First make a Base class. This is always needed at least once:
+		```
+		from sqlalchemy.ext.declarative improt declarative_base
+		Base = declarative_base()
+		```
+		b. From here, you can make a class that maps to a table and properties map to columns!
+		```
+		from sqlalchemy import Column, Integer, String
+		class User(Base):
+			__tablename__ = 'users' #This is the table to map to
+			
+			id = Column(Integer, primary_key = True)
+			name = Column(String)
+			fullname = Column(String)
+		```
+		This makes a class User to map to the 'users' table, and makes the property 'id' be the primary key. The 'name' and 'fullname' properties are associated with columns in the db. Note that the 'Base' is the superclass for the User subclass definition.
+		
+		In python, superclasses are called 'bases', and subclasses are called 'derived' classes.
+	3. Make a Schema
+	• The Declarative adds the attribute object.__table__ to the class, which can be called to view the table metadata that we added in the previous step.
+	• This __table__ object is part of the MetaData collection, which can be used to hold a set of schema and create tables from them
+	• So once you add this object to the MetaData, you can have the Base class create tables for all of these schemas in the MetaData:
+	```
+	print(User.__table__) 
+	#Prints out the 'Table' object that was made in the Declarative
+	Base.metadata.create_all(engine)
+	#This calls CREATE TABLE commands and sends them to the db
+	```
+	Note that it first checks if the table is present, so that the table isn't overwritten.
+	
+	• In all:
+		○ schema = strucute of a table that hasn't yet been committed to the db as a table
+		○ Calling the Base.metadata to create tables from the schemas is how to add tables to the db with sqlalchemy
+
+	4. Create an Instance of the Mapped Class
+	• Now the 'User' class gives us a structure to create objects for each entry in the db (row)
+	• By default, the Declarative creates an __init__() method to serve as a constructor, such that each Column in the class can be assigned a value on creating an instance of the class
+	• For each Column that is not given an value, the value 'None' is assigned to the Column
+		○ This was a design decision by SQLAlchemy to allow for empty values in the db tables
+	• The instrumentation system tracks Columns that were assigned values in the class instance, so they can be added to the db with an INSERT command
+	```
+	ed_user = User(name='ed', fullname='Edward Jones')
+	print(str(ed_user.id)) #Returns 'None'
+	```
+
+	5. Creating a Session
+	• The Session object is a handler for connections to the db
+	• Create a session that's connected to the already-defined engine, then you can use this session to interact with the database
+	```
+	from sqlalchemy.orm import sessionmaker
+	Session = sessionmaker(bind=engine)
+	#Note that this depends on the engine() declared earlier
+	session = Session()
+	```
+
+	6. Adding and Updating Objects
+	• Class instances are added to the db with the 'session', and the process is two step in a similar way as git manages changes to a repo
+		○ First you add objects, and they are put in a 'pending' status
+		○ You can modify the objects in the pending status as much as you want, and the object is never added to the database
+		○ You must 'commit' the session to add the instances and updates to the db (just like git)
+		○ Committing isn't the only way: if you query the database, the session is 'flushed'; the new instances are added
+			§ This is so queries apply to the most updated set of data
+			§ No commit necessary
+	• General approach to adding instances, as an example:
+	```
+	#Make an instance
+	ed_user = User(name='ed', fullname='Edward Jones')
+	session.commit()
+	#Add instance to session
+	session.add(ed_user)
+	#Now to update ed_user
+	ed_user.nickname = "eddie"
+	#The update is still tracked
+	#Now to add more users with add_all
+	session.add_all([
+		User(name='josh'),
+		User(name='john', fullname='Johnathan Johnson'),
+		User(name='sandy', nickname='sand')
+	])
+	session.dirty
+	#Will show that the user ed_user was modified
+	session.new
+	#Will show the new users josh, john, and sandy
+	session.commit()
+	#All additions and updates are done
+	```
+	7. Rolling Back
+	• You can roll back changes to the db, but I'll read on this when I need it. For now I'm going to focus on doing CRUD tasks
+
+	8. Querying
+	• Call the query(table_name) method on the session object to query rows in the db
+	• With query() you can call specific columns from tables, you can order_by(column) to order by a column name
+	• Example:
+	```
+	#Printing values for instances (rows) in the db
+	for instance in session.query(User).order_by(User.id):
+		print(instance.name, instance.fullname)
+	
+	#Printing the instancess themselves, all() of them
+	for row in session.query(User).all():
+		print(row.User)
+	```
+	10. More sections but I'm skipping to deleting for now
+
+	11. Deleting
+	• Deleting is pretty simple, just call the delete() method on session
+	```
+	session.delete(ed_user)
+	#Now ed_user is deleted from the User table, since it was mapped there
+	```
+	• Now deleting instances that are not already mapped, that's something that is probably later in the manual than the 'tutorial'
+
+For now, I have basic CRUD operations read with sqlalchemy. I think now I can get to work and learn more when I have specific questions.
